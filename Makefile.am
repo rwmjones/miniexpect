@@ -1,0 +1,50 @@
+# miniexpect
+# Copyright (C) 2014 Red Hat Inc.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+
+ACLOCAL_AMFLAGS = -I m4
+
+EXTRA_DIST =
+
+# The library.
+
+lib_LTLIBRARIES = libminiexpect.la
+
+libminiexpect_la_SOURCES = miniexpect.c miniexpect.h
+libminiexpect_la_CFLAGS = $(PCRE_CFLAGS) -Wall
+libminiexpect_la_LIBADD = $(PCRE_LIBS)
+libminiexpect_la_LDFLAGS = -version-info 0:0:0
+
+# Examples.
+
+noinst_PROGRAMS = example-sshpass
+
+example_sshpass_SOURCES = example-sshpass.c
+example_sshpass_CFLAGS = $(PCRE_CFLAGS) -Wall
+example_sshpass_LDADD = libminiexpect.la
+
+# Tests.
+
+TESTS = $(check_PROGRAMS)
+check_PROGRAMS = test-spawn
+
+test_spawn_SOURCES = test-spawn.c
+test_spawn_CFLAGS = $(PCRE_CFLAGS) -Wall
+test_spawn_LDADD = libminiexpect.la
+
+# Clean.
+
+CLEANFILES = *~
