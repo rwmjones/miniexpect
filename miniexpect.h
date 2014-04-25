@@ -50,6 +50,11 @@ struct mexp_h {
    */
   size_t read_size;
 
+  /* If mexp_expect returns MEXP_PCRE_ERROR, then the actual PCRE
+   * error code is returned here.  See pcre_exec(3) for details.
+   */
+  int pcre_error;
+
   /* Opaque pointers for use of the caller.  The library will not
    * touch these.
    */
@@ -92,35 +97,30 @@ extern mexp_h *mexp_spawnl (const char *file, const char *arg, ...);
  */
 extern int mexp_close (mexp_h *h);
 
+/* The list of regular expressions passed to mexp_expect. */
+struct mexp_regexp {
+  int r;                        /* The returned value from mexp_expect.
+                                 * Must be > 0.
+                                 */
+  const pcre *re;               /* The compiled regular expression. */
+  const pcre_extra *extra;      /* See pcre_exec. */
+  int options;                  /* See pcre_exec. */
+};
+typedef struct mexp_regexp mexp_regexp;
+
 enum mexp_status {
-  MEXP_EOF = 0,
-  MEXP_ERROR = 1,
-  MEXP_TIMEOUT = 2,
-  MEXP_MATCHED = 3,
-  MEXP_PCRE_ERROR = 4,
+  MEXP_EOF        = -1,
+  MEXP_TIMEOUT    = -2,
+  MEXP_ERROR      = -3,
+  MEXP_PCRE_ERROR = -4,
 };
 
 /* Expect some output from the subprocess.  Match the output against
- * the PCRE regular expression.
- *
- * 'code', 'extra', 'options', 'ovector' and 'ovecsize' are passed
- * through to the pcre_exec function.  See pcreapi(3).
- *
- * If you want to match multiple strings, you have to combine them
- * into a single regexp, eg. "([Pp]assword)|([Ll]ogin)|([Ff]ailed)".
- * Then examine ovector[2], ovector[4], ovector[6] to see if they
- * contain '>= 0' or '-1'.  See the pcreapi(3) man page for further
- * information.
- *
- * 'code' may be NULL, which means we don't match against a regular
- * expression.  This is useful if you just want to wait for EOF or
- * timeout.
+ * the PCRE regular expression(s) in the list, and return which one
+ * matched.
  *
  * This can return:
  *
- *   MEXP_MATCHED:
- *     The input matched the regular expression.  Use ovector
- *     to find out what matched in the buffer (mexp_h->buffer).
  *   MEXP_TIMEOUT:
  *     No input matched before the timeout (mexp_h->timeout) was reached.
  *   MEXP_EOF:
@@ -128,13 +128,20 @@ enum mexp_status {
  *   MEXP_ERROR:
  *     There was a system call error (eg. from the read call).  See errno.
  *   MEXP_PCRE_ERROR
- *     There was a pcre_exec error.  *pcre_ret is set to the error code
+ *     There was a pcre_exec error.  h->pcre_error is set to the error code
  *     (see pcreapi(3) for a list of PCRE_* error codes and what they mean).
+ *
+ * Notes:
+ *
+ * - 'regexps' may be NULL or an empty list, which means we don't
+ *   match against a regular expression.  This is useful if you just
+ *   want to wait for EOF or timeout.
+ *
+ * - 'regexps[].re', 'regexps[].extra', 'regexps[].options', 'ovector'
+ *   and 'ovecsize' are passed through to the pcre_exec function.
  */
-extern enum mexp_status mexp_expect (mexp_h *h, const pcre *code,
-                                     const pcre_extra *extra,
-                                     int options, int *ovector, int ovecsize,
-                                     int *pcre_ret);
+extern int mexp_expect (mexp_h *h, const mexp_regexp *regexps,
+                        int *ovector, int ovecsize);
 
 /* This is a convenience function for writing something (eg. a
  * password or command) to the subprocess.  You could do this by

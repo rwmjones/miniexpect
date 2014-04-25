@@ -40,21 +40,7 @@
 
 #include "miniexpect.h"
 
-static pcre *
-compile_re (const char *rex)
-{
-  const char *errptr;
-  int erroffset;
-  pcre *ret;
-
-  ret = pcre_compile (rex, 0, &errptr, &erroffset, NULL);
-  if (ret == NULL) {
-    fprintf (stderr, "error: failed to compile regular expression '%s': %s at offset %d\n",
-             rex, errptr, erroffset);
-    exit (EXIT_FAILURE);
-  }
-  return ret;
-}
+static pcre *compile_re (const char *rex);
 
 int
 main (int argc, char *argv[])
@@ -65,7 +51,6 @@ main (int argc, char *argv[])
   pcre *password_re, *prompt_re, *hello_re;
   const int ovecsize = 12;
   int ovector[ovecsize];
-  int pcre_err;
 
   if (argc <= 3) {
     fprintf (stderr, "usage: sshpass PASSWORD ssh [SSH-ARGS...] HOST\n");
@@ -76,7 +61,7 @@ main (int argc, char *argv[])
 
   printf ("starting ssh command ...\n");
 
-  h = mexp_spawnv ("ssh", &argv[2]);
+  h = mexp_spawnv (argv[2], &argv[2]);
   if (h == NULL) {
     perror ("mexp_spawnv: ssh");
     exit (EXIT_FAILURE);
@@ -84,21 +69,26 @@ main (int argc, char *argv[])
 
   /* Wait for the password prompt. */
   password_re = compile_re ("assword");
-  switch (mexp_expect (h, password_re, NULL, 0, ovector, ovecsize, &pcre_err)) {
+  switch (mexp_expect (h,
+                       (mexp_regexp[]) {
+                         { 100, .re = password_re },
+                         { 0 }
+                       },
+                       ovector, ovecsize)) {
+  case 100:
+    break;
   case MEXP_EOF:
     fprintf (stderr, "error: ssh closed the connection unexpectedly\n");
-    goto error;
-  case MEXP_ERROR:
-    perror ("mexp_expect");
     goto error;
   case MEXP_TIMEOUT:
     fprintf (stderr, "error: timeout before reaching the password prompt\n");
     goto error;
-  case MEXP_PCRE_ERROR:
-    fprintf (stderr, "error: PCRE error: %d\n", pcre_err);
+  case MEXP_ERROR:
+    perror ("mexp_expect");
     goto error;
-  case MEXP_MATCHED:
-    break;
+  case MEXP_PCRE_ERROR:
+    fprintf (stderr, "error: PCRE error: %d\n", h->pcre_error);
+    goto error;
   }
 
   /* Got the password prompt, so send a password. */
@@ -115,31 +105,31 @@ main (int argc, char *argv[])
    * expect checks all these possibilities.  Unfortunately since all
    * prompts are a little bit different, we have to guess here.
    */
-  prompt_re = compile_re ("(assword)|([#$])");
-  switch (mexp_expect (h, prompt_re, NULL, 0, ovector, ovecsize, &pcre_err)) {
+  prompt_re = compile_re ("[#$]");
+  switch (mexp_expect (h,
+                       (mexp_regexp[]) {
+                         { 100, .re = password_re },
+                         { 101, .re = prompt_re },
+                         { 0 },
+                       },
+                       ovector, ovecsize)) {
+  case 100:                     /* Password. */
+    fprintf (stderr, "error: ssh asked for password again, probably the password supplied is wrong\n");
+    goto error;
+  case 101:                     /* Prompt. */
+    break;
   case MEXP_EOF:
     fprintf (stderr, "error: ssh closed the connection unexpectedly\n");
-    goto error;
-  case MEXP_ERROR:
-    perror ("mexp_expect");
     goto error;
   case MEXP_TIMEOUT:
     fprintf (stderr, "error: timeout before reaching the prompt\n");
     goto error;
-  case MEXP_PCRE_ERROR:
-    fprintf (stderr, "error: PCRE error: %d\n", pcre_err);
+  case MEXP_ERROR:
+    perror ("mexp_expect");
     goto error;
-  case MEXP_MATCHED:
-    /* Which part of the regexp matched? */
-    if (ovector[2] >= 0) {      /* password */
-      fprintf (stderr, "error: ssh asked for password again, probably the password supplied is wrong\n");
-      goto error;
-    }
-    else if (ovector[4] >= 0) { /* prompt */
-      break;
-    }
-    else
-      abort ();                 /* shouldn't happen */
+  case MEXP_PCRE_ERROR:
+    fprintf (stderr, "error: PCRE error: %d\n", h->pcre_error);
+    goto error;
   }
 
   /* Send a command which will have expected output. */
@@ -152,21 +142,26 @@ main (int argc, char *argv[])
 
   /* Wait for expected output from echo hello command. */
   hello_re = compile_re ("hello");
-  switch (mexp_expect (h, hello_re, NULL, 0, ovector, ovecsize, &pcre_err)) {
+  switch (mexp_expect (h,
+                       (mexp_regexp[]) {
+                         { 100, .re = hello_re },
+                         { 0 },
+                       },
+                       ovector, ovecsize)) {
+  case 100:
+    break;
   case MEXP_EOF:
     fprintf (stderr, "error: ssh closed the connection unexpectedly\n");
-    goto error;
-  case MEXP_ERROR:
-    perror ("mexp_expect");
     goto error;
   case MEXP_TIMEOUT:
     fprintf (stderr, "error: timeout before reading command output\n");
     goto error;
-  case MEXP_PCRE_ERROR:
-    fprintf (stderr, "error: PCRE error: %d\n", pcre_err);
+  case MEXP_ERROR:
+    perror ("mexp_expect");
     goto error;
-  case MEXP_MATCHED:
-    break;
+  case MEXP_PCRE_ERROR:
+    fprintf (stderr, "error: PCRE error: %d\n", h->pcre_error);
+    goto error;
   }
 
   /* Send exit command and wait for ssh to exit. */
@@ -177,18 +172,17 @@ main (int argc, char *argv[])
     goto error;
   }
 
-  switch (mexp_expect (h, NULL, NULL, 0, NULL, 0, NULL)) {
+  switch (mexp_expect (h, NULL, NULL, 0)) {
   case MEXP_EOF:
     /* This is what we're expecting: ssh will close the connection. */
     break;
-  case MEXP_ERROR:
-    perror ("mexp_expect");
-    goto error;
   case MEXP_TIMEOUT:
     fprintf (stderr, "error: timeout before ssh closed the connection\n");
     goto error;
+  case MEXP_ERROR:
+    perror ("mexp_expect");
+    goto error;
   case MEXP_PCRE_ERROR:
-  case MEXP_MATCHED:
     fprintf (stderr, "error: unexpected return value from mexp_expect\n");
     goto error;
   }
@@ -208,4 +202,21 @@ main (int argc, char *argv[])
  error:
   mexp_close (h);
   exit (EXIT_FAILURE);
+}
+
+/* Helper function to compile a PCRE regexp. */
+static pcre *
+compile_re (const char *rex)
+{
+  const char *errptr;
+  int erroffset;
+  pcre *ret;
+
+  ret = pcre_compile (rex, 0, &errptr, &erroffset, NULL);
+  if (ret == NULL) {
+    fprintf (stderr, "error: failed to compile regular expression '%s': %s at offset %d\n",
+             rex, errptr, erroffset);
+    exit (EXIT_FAILURE);
+  }
+  return ret;
 }

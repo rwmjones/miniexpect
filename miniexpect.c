@@ -50,6 +50,7 @@ create_handle (void)
   h->pid = 0;
   h->timeout = 60000;
   h->read_size = 1024;
+  h->pcre_error = 0;
   h->buffer = NULL;
   h->len = h->alloc = 0;
   h->user1 = h->user2 = h->user3 = NULL;
@@ -196,10 +197,7 @@ mexp_spawnv (const char *file, char **argv)
 }
 
 enum mexp_status
-mexp_expect (mexp_h *h, const pcre *code,
-             const pcre_extra *extra,
-             int options, int *ovector, int ovecsize,
-             int *pcre_ret)
+mexp_expect (mexp_h *h, const mexp_regexp *regexps, int *ovector, int ovecsize)
 {
   time_t start_t, now_t;
   int timeout;
@@ -208,8 +206,6 @@ mexp_expect (mexp_h *h, const pcre *code,
   ssize_t rs;
 
   time (&start_t);
-
-  options |= PCRE_PARTIAL_SOFT;
 
   /* Clear the read buffer. */
   clear_buffer (h);
@@ -277,34 +273,50 @@ mexp_expect (mexp_h *h, const pcre *code,
     fprintf (stderr, "DEBUG: buffer content: %s\n", h->buffer);
 #endif
 
-    /* See if there is a full or partial match against the regular expression. */
-    if (code) {
+    /* See if there is a full or partial match against any regexp. */
+    if (regexps) {
+      size_t i;
+      int can_clear_buffer = 1;
+
       assert (h->buffer != NULL);
-      r = pcre_exec (code, extra, h->buffer, (int)h->len, 0,
-                     options, ovector, ovecsize);
-      if (pcre_ret)
-        *pcre_ret = r;
 
-      if (r >= 0) {
-        /* A full match. */
-        return MEXP_MATCHED;
+      for (i = 0; regexps[i].r > 0; ++i) {
+        int options = regexps[i].options | PCRE_PARTIAL_SOFT;
+
+        r = pcre_exec (regexps[i].re, regexps[i].extra,
+                       h->buffer, (int)h->len, 0,
+                       options,
+                       ovector, ovecsize);
+        h->pcre_error = r;
+
+        if (r >= 0) {
+          /* A full match. */
+          return regexps[i].r;
+        }
+
+        else if (r == PCRE_ERROR_NOMATCH) {
+          /* No match at all. */
+          /* (nothing here) */
+        }
+
+        else if (r == PCRE_ERROR_PARTIAL) {
+          /* Partial match.  Keep the buffer and keep reading. */
+          can_clear_buffer = 0;
+        }
+
+        else {
+          /* An actual PCRE error. */
+          return MEXP_PCRE_ERROR;
+        }
       }
 
-      else if (r == PCRE_ERROR_NOMATCH) {
-        /* No match at all, so we can dump the input buffer. */
+      /* If none of the regular expressions matched (not partially)
+       * then we can clear the buffer.  This is an optimization.
+       */
+      if (can_clear_buffer)
         clear_buffer (h);
-      }
 
-      else if (r == PCRE_ERROR_PARTIAL) {
-        /* Partial match.  Keep the buffer and keep reading. */
-        /* (nothing here) */
-      }
-
-      else {
-        /* An actual PCRE error. */
-        return MEXP_PCRE_ERROR;
-      }
-    } /* if (code) */
+    } /* if (regexps) */
   }
 }
 
