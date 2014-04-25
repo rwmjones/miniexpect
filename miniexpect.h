@@ -99,8 +99,9 @@ extern int mexp_close (mexp_h *h);
 
 /* The list of regular expressions passed to mexp_expect. */
 struct mexp_regexp {
-  int r;                        /* The returned value from mexp_expect.
-                                 * Must be > 0.
+  int r;                        /* The returned value from mexp_expect
+                                 * if this regular expression matches.
+                                 * MUST be > 0.
                                  */
   const pcre *re;               /* The compiled regular expression. */
   const pcre_extra *extra;      /* See pcre_exec. */
@@ -109,15 +110,18 @@ struct mexp_regexp {
 typedef struct mexp_regexp mexp_regexp;
 
 enum mexp_status {
-  MEXP_EOF        = -1,
-  MEXP_TIMEOUT    = -2,
-  MEXP_ERROR      = -3,
-  MEXP_PCRE_ERROR = -4,
+  MEXP_EOF        = 0,
+  MEXP_TIMEOUT    = -1,
+  MEXP_ERROR      = -2,
+  MEXP_PCRE_ERROR = -3,
 };
 
 /* Expect some output from the subprocess.  Match the output against
  * the PCRE regular expression(s) in the list, and return which one
  * matched.
+ *
+ * See example-sshpass.c for an example of how to pass in regular
+ * expressions.
  *
  * This can return:
  *
