@@ -51,6 +51,15 @@ test_ls_version_SOURCES = test-ls-version.c tests.h miniexpect.h
 test_ls_version_CFLAGS = $(PCRE_CFLAGS) -Wall
 test_ls_version_LDADD = libminiexpect.la
 
+# parallel-tests breaks the ability to put 'valgrind' into
+# TESTS_ENVIRONMENT.  Hence we have to work around it:
+check-valgrind:
+	for t in $(TESTS); do \
+	  $(LIBTOOL) --mode=execute $(VG) ./$$t; \
+	  r=$$?; \
+	  if [ $$r -ne 0 ]; then exit $$r; fi; \
+	done
+
 # Clean.
 
 CLEANFILES = *~

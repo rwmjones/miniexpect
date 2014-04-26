@@ -49,6 +49,17 @@ dnl Optional for building the manual page.  This is part of Perl.
 AC_CHECK_PROG([POD2MAN], [pod2man], [pod2man], [no])
 AM_CONDITIONAL([HAVE_POD2MAN], [test "x$POD2MAN" != "xno"])
 
+dnl Optional for checking for memory errors.
+AC_CHECK_PROG([VALGRIND], [valgrind], [valgrind], [no])
+AS_IF([test "x$VALGRIND" != "xno"],[
+    VG='$(VALGRIND) --leak-check=full --show-leak-kinds=all --error-exitcode=119 --trace-children=no'
+],[
+    dnl Valgrind is not installed, so give a clear error if
+    dnl the user tries 'make check-valgrind'.
+    VG=ERROR_VALGRIND_IS_NOT_INSTALLED
+])
+AC_SUBST([VG])
+
 dnl Produce output files.
 AC_CONFIG_HEADERS([config.h])
 
