@@ -67,9 +67,9 @@ typedef struct mexp_regexp mexp_regexp;
 
 enum mexp_status {
   MEXP_EOF        = 0,
-  MEXP_TIMEOUT    = -1,
-  MEXP_ERROR      = -2,
-  MEXP_PCRE_ERROR = -3,
+  MEXP_ERROR      = -1,
+  MEXP_PCRE_ERROR = -2,
+  MEXP_TIMEOUT    = -3,
 };
 
 extern int mexp_expect (mexp_h *h, const mexp_regexp *regexps,
