@@ -24,6 +24,9 @@ AM_SILENT_RULES([yes]) # make --enable-silent-rules the default.
 
 AC_CONFIG_MACRO_DIR([m4])
 
+dnl Enable system extensions (_GNU_SOURCE etc).
+AC_USE_SYSTEM_EXTENSIONS
+
 AM_PROG_LIBTOOL
 
 dnl Check for basic C environment.
@@ -35,9 +38,6 @@ AC_C_PROTOTYPES
 test "x$U" != "x" && AC_MSG_ERROR([Compiler not ANSI compliant])
 
 AM_PROG_CC_C_O
-
-dnl Enable system extensions (_GNU_SOURCE etc).
-AC_USE_SYSTEM_EXTENSIONS
 
 dnl Check support for 64 bit file offsets.
 AC_SYS_LARGEFILE
