@@ -41,7 +41,7 @@ example_sshpass_LDADD = libminiexpect.la
 TESTS = $(check_PROGRAMS)
 check_PROGRAMS = test-spawn
 
-test_spawn_SOURCES = test-spawn.c
+test_spawn_SOURCES = test-spawn.c tests.h miniexpect.h
 test_spawn_CFLAGS = $(PCRE_CFLAGS) -Wall
 test_spawn_LDADD = libminiexpect.la
 
