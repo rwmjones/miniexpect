@@ -208,6 +208,10 @@ mexp_expect (mexp_h *h, const mexp_regexp *regexps, int *ovector, int ovecsize)
   time (&start_t);
 
   /* Clear the read buffer. */
+  /* XXX This is possibly incorrect because it throws away inputs that
+   * may not have been matched yet.  A better idea is to record the
+   * end of the previous match and only throw that away.
+   */
   clear_buffer (h);
 
   for (;;) {
