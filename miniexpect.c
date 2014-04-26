@@ -80,6 +80,8 @@ mexp_close (mexp_h *h)
       return -1;
   }
 
+  free (h);
+
   return status;
 }
 
