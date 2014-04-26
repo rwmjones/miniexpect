@@ -45,11 +45,18 @@ test_spawn_SOURCES = test-spawn.c
 test_spawn_CFLAGS = $(PCRE_CFLAGS) -Wall
 test_spawn_LDADD = libminiexpect.la
 
+# Clean.
+
+CLEANFILES = *~
+
 # Man pages.
 
 man_MANS = miniexpect.3
 
 if HAVE_POD2MAN
+
+CLEANFILES += miniexpect.3
+
 miniexpect.3: miniexpect.pod
 	$(POD2MAN) \
 	  --section 3 \
@@ -57,8 +64,5 @@ miniexpect.3: miniexpect.pod
 	  -c "Library functions" \
 	  $< > $@-t
 	mv $@-t $@
+
 endif
-
-# Clean.
-
-CLEANFILES = *~
