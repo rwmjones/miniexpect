@@ -45,6 +45,10 @@ AC_SYS_LARGEFILE
 dnl The only dependency is libpcre (Perl Compatible Regular Expressions).
 PKG_CHECK_MODULES([PCRE], [libpcre])
 
+dnl Optional for building the manual page.  This is part of Perl.
+AC_CHECK_PROG([POD2MAN], [pod2man], [pod2man], [no])
+AM_CONDITIONAL([HAVE_POD2MAN], [test "x$POD2MAN" != "xno"])
+
 dnl Produce output files.
 AC_CONFIG_HEADERS([config.h])
 

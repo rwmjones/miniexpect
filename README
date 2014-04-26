@@ -21,7 +21,11 @@ Source is available from: http://git.annexia.org/?p=miniexpect.git;a=summary
 Using the library
 -----------------
 
-The API is described in miniexpect.h.
+If you wanted to copy the library into your own code (instead of
+linking to it as a dependency), you only need to copy the two files:
+miniexpect.h, miniexpect.c.
 
-To understand how to use the API, take a look at the examples and
+The API is documented in the manual page (miniexpect.pod / miniexpect.3).
+
+For examples of how to use the API in reality, see the examples and
 tests in the source directory.

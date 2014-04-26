@@ -17,7 +17,7 @@
 
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST =
+EXTRA_DIST = miniexpect.3
 
 # The library.
 
@@ -44,6 +44,20 @@ check_PROGRAMS = test-spawn
 test_spawn_SOURCES = test-spawn.c
 test_spawn_CFLAGS = $(PCRE_CFLAGS) -Wall
 test_spawn_LDADD = libminiexpect.la
+
+# Man pages.
+
+man_MANS = miniexpect.3
+
+if HAVE_POD2MAN
+miniexpect.3: miniexpect.pod
+	$(POD2MAN) \
+	  --section 3 \
+	  --release "$(PACKAGE)-$(VERSION)" \
+	  -c "Library functions" \
+	  $< > $@-t
+	mv $@-t $@
+endif
 
 # Clean.
 
