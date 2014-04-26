@@ -18,21 +18,23 @@ miniexpect - A very simple expect library for C.
  }
  mexp_close (h);
 
- cc prog.c -o prog -lminiexpect
+ cc prog.c -o prog -lminiexpect -lpcre
 
 =head1 DESCRIPTION
 
-miniexpect is a very simple expect-like library for C.
+Miniexpect is a very simple expect-like library for C.  Expect is a
+way to control an external program that wants to be run interactively.
 
-It has a saner interface than libexpect, and doesn't depend on Tcl.
-It is also thread safe, const-correct and uses modern C standards.
+Miniexpect has a saner interface than libexpect, and doesn't depend on
+Tcl.  It is also thread safe, const-correct and uses modern C
+standards.
 
-It is standalone, except that it requires the PCRE (Perl Compatible
-Regular Expressions) library from http://www.pcre.org/.  The PCRE
-dependency is fundamental because we want to offer the most powerful
-regular expression syntax to match on, but more importantly because
-PCRE has a convenient way to detect partial matches which made this
-library very simple to implement.
+Miniexpect is a standalone library, except for a single dependency: it
+requires the PCRE (Perl Compatible Regular Expressions) library from
+L<http://www.pcre.org/>.  The PCRE dependency is fundamental because
+we want to offer the most powerful regular expression syntax to match
+on, but more importantly because PCRE has a convenient way to detect
+partial matches which made this library very simple to implement.
 
 This manual page documents the API.  Examples of how to use the API
 can be found in the source directory.
@@ -261,7 +263,7 @@ compiler, you can just use a local variable instead.
  char *errptr;
  int offset;
  pcre *password_re, *prompt_re;
- int ovecsize = 12;
+ const int ovecsize = 12;
  int ovector[ovecsize];
  
  password_re = pcre_compile ("assword", 0, &errptr, &offset, NULL);
@@ -302,8 +304,25 @@ B<int mexp_printf (mexp_h *h, const char *fs, ...);>
 
 This returns the number of bytes, if the whole message was written OK.
 If there was an error, -1 is returned and the error is available in
-C<errno>.  Note that this function will not do a partial write.  If it
-cannot write all the data, then it will return an error.
+C<errno>.
+
+Notes:
+
+=over 4
+
+=item *
+
+C<mexp_printf> will not do a partial write.  If it cannot write all
+the data, then it will return an error.
+
+=item *
+
+This function does not write a newline automatically.  If you want to
+send a command followed by a newline you have to do something like:
+
+ mexp_printf (h, "exit\n");
+
+=back
 
 =head1 SOURCE
 
