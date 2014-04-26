@@ -39,4 +39,20 @@ test_diagnose (int status)
     fprintf (stderr, "stopped by signal %d", WSTOPSIG (status));
 }
 
+static pcre *
+test_compile_re (const char *rex)
+{
+  const char *errptr;
+  int erroffset;
+  pcre *ret;
+
+  ret = pcre_compile (rex, 0, &errptr, &erroffset, NULL);
+  if (ret == NULL) {
+    fprintf (stderr, "error: failed to compile regular expression '%s': %s at offset %d\n",
+             rex, errptr, erroffset);
+    exit (EXIT_FAILURE);
+  }
+  return ret;
+}
+
 #endif /* TESTS_H_ */
