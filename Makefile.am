@@ -41,7 +41,8 @@ example_sshpass_LDADD = libminiexpect.la
 TESTS = $(check_PROGRAMS)
 check_PROGRAMS = \
 	test-spawn \
-	test-ls-version
+	test-ls-version \
+	test-multi-match
 
 test_spawn_SOURCES = test-spawn.c tests.h miniexpect.h
 test_spawn_CFLAGS = $(PCRE_CFLAGS) -Wall
@@ -50,6 +51,10 @@ test_spawn_LDADD = libminiexpect.la
 test_ls_version_SOURCES = test-ls-version.c tests.h miniexpect.h
 test_ls_version_CFLAGS = $(PCRE_CFLAGS) -Wall
 test_ls_version_LDADD = libminiexpect.la
+
+test_multi_match_SOURCES = test-multi-match.c tests.h miniexpect.h
+test_multi_match_CFLAGS = $(PCRE_CFLAGS) -Wall
+test_multi_match_LDADD = libminiexpect.la
 
 # parallel-tests breaks the ability to put 'valgrind' into
 # TESTS_ENVIRONMENT.  Hence we have to work around it:

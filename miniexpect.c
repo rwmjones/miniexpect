@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <poll.h>
@@ -53,6 +54,7 @@ create_handle (void)
   h->pcre_error = 0;
   h->buffer = NULL;
   h->len = h->alloc = 0;
+  h->next_match = -1;
   h->user1 = h->user2 = h->user3 = NULL;
 
   return h;
@@ -64,6 +66,7 @@ clear_buffer (mexp_h *h)
   free (h->buffer);
   h->buffer = NULL;
   h->alloc = h->len = 0;
+  h->next_match = -1;
 }
 
 int
@@ -209,12 +212,19 @@ mexp_expect (mexp_h *h, const mexp_regexp *regexps, int *ovector, int ovecsize)
 
   time (&start_t);
 
-  /* Clear the read buffer. */
-  /* XXX This is possibly incorrect because it throws away inputs that
-   * may not have been matched yet.  A better idea is to record the
-   * end of the previous match and only throw that away.
-   */
-  clear_buffer (h);
+  if (h->next_match == -1) {
+    /* Fully clear the buffer, then read. */
+    clear_buffer (h);
+  } else {
+    /* See the comment in the manual about h->next_match.  We have
+     * some data remaining in the buffer, so begin by matching that.
+     */
+    memmove (&h->buffer[0], &h->buffer[h->next_match], h->len - h->next_match);
+    h->len -= h->next_match;
+    h->buffer[h->len] = '\0';
+    h->next_match = -1;
+    goto try_match;
+  }
 
   for (;;) {
     /* If we've got a timeout then work out how many seconds are left.
@@ -279,6 +289,7 @@ mexp_expect (mexp_h *h, const mexp_regexp *regexps, int *ovector, int ovecsize)
     fprintf (stderr, "DEBUG: buffer content: %s\n", h->buffer);
 #endif
 
+  try_match:
     /* See if there is a full or partial match against any regexp. */
     if (regexps) {
       size_t i;
@@ -297,6 +308,10 @@ mexp_expect (mexp_h *h, const mexp_regexp *regexps, int *ovector, int ovecsize)
 
         if (r >= 0) {
           /* A full match. */
+          if (ovector != NULL && ovecsize >= 1 && ovector[1] >= 0)
+            h->next_match = ovector[1];
+          else
+            h->next_match = -1;
           return regexps[i].r;
         }
 

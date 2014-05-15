@@ -41,6 +41,7 @@ struct mexp_h {
   char *buffer;
   size_t len;
   size_t alloc;
+  ssize_t next_match;
   size_t read_size;
   int pcre_error;
   void *user1;

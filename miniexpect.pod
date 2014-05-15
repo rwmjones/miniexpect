@@ -114,6 +114,19 @@ the process, but it will contain at least the part matched by the
 regular expression (and maybe some more).  C<buffer> is the read
 buffer and C<len> is the number of bytes of data in the buffer.
 
+   ssize_t next_match;
+
+If C<mexp_expect> returns a match, then C<next_match> points to the
+first byte in the buffer I<after> the fully matched expression.  (It
+may be C<-1> which means it is invalid).  The next time that
+C<mexp_expect> is called, it will start by consuming the data
+C<buffer[next_match...len-1]>.  Callers may also need to read from
+that point in the buffer before calling L<read(2)> on the file
+descriptor.  Callers may also set this, for example setting it to
+C<-1> in order to ignore the remainder of the buffer.  In most cases
+callers can ignore this field, and C<mexp_expect> will just do the
+right thing when called repeatedly.
+
    size_t read_size;
 
 Callers may set this to the natural size (in bytes) for reads from the
