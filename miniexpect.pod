@@ -257,6 +257,29 @@ for EOF or timeout.
 C<regexps[].re>, C<regexps[].extra>, C<regexps[].options>, C<ovector>
 and C<ovecsize> are passed through to the L<pcre_exec(3)> function.
 
+=item *
+
+If multiple regular expressions are passed, then they are checked in
+turn and the I<first> regular expression that matches is returned
+I<even if the match happens later in the input than another regular
+expression>.
+
+For example if the input is C<"hello world"> and you pass the two
+regular expressions:
+
+ regexps[0].re = world
+ regexps[1].re = hello
+
+then the first regular expression (C<"world">) may match and the
+C<"hello"> part of the input may be ignored.
+
+In some cases this can even lead to unpredictable matching.  In the
+case above, if we only happened to read C<"hello wor">, then the
+second regular expression (C<"hello">) I<would> match.
+
+If this is a concern, combine your regular expressions into a single
+one, eg. C<(hello)|(world)>.
+
 =back
 
 =head2 mexp_expect example
