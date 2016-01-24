@@ -186,6 +186,23 @@ This case should not necessarily be considered an error.
 
 =back
 
+This is how code should check for and print errors from C<mexp_close>:
+
+  status = mexp_close (h);
+  if (status == -1) {
+    perror ("mexp_close");
+    return -1;
+  }
+  if (WIFSIGNALED (status) && WTERMSIG (status) == SIGHUP)
+    goto ignore; /* not an error */
+  if (!WIFEXITED (status) || WEXITSTATUS (status) != 0)
+    /* You could use the W* macros to print a better error message. */
+    fprintf (stderr, "error: subprocess failed, status = %d", status);
+    return -1;
+  }
+ ignore:
+  /* no error case */
+
 =head1 EXPECT FUNCTION
 
 Miniexpect contains a powerful regular expression matching function
