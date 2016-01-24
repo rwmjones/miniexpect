@@ -110,7 +110,7 @@ B<void mexp_set_timeout_ms (mexp_h *h, int millisecs);>
 
 B<void mexp_set_timeout (mexp_h *h, int secs);>
 
-Get and set the timeout used by C<mexp_expect> [see below].  The
+Get or set the timeout used by C<mexp_expect> [see below].  The
 resolution is milliseconds (1/1000th of a second).  Set this before
 calling C<mexp_expect>.  Passing -1 to either of the C<set_> methods
 means no timeout.  The default setting is 60000 milliseconds (60
