@@ -87,7 +87,7 @@ main (int argc, char *argv[])
     perror ("mexp_expect");
     goto error;
   case MEXP_PCRE_ERROR:
-    fprintf (stderr, "error: PCRE error: %d\n", h->pcre_error);
+    fprintf (stderr, "error: PCRE error: %d\n", mexp_get_pcre_error (h));
     goto error;
   }
 
@@ -128,7 +128,7 @@ main (int argc, char *argv[])
     perror ("mexp_expect");
     goto error;
   case MEXP_PCRE_ERROR:
-    fprintf (stderr, "error: PCRE error: %d\n", h->pcre_error);
+    fprintf (stderr, "error: PCRE error: %d\n", mexp_get_pcre_error (h));
     goto error;
   }
 
@@ -160,7 +160,7 @@ main (int argc, char *argv[])
     perror ("mexp_expect");
     goto error;
   case MEXP_PCRE_ERROR:
-    fprintf (stderr, "error: PCRE error: %d\n", h->pcre_error);
+    fprintf (stderr, "error: PCRE error: %d\n", mexp_get_pcre_error (h));
     goto error;
   }
 

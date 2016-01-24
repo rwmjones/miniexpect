@@ -74,7 +74,7 @@ main (int argc, char *argv[])
         perror ("mexp_expect");
       exit (EXIT_FAILURE);
     case MEXP_PCRE_ERROR:
-      fprintf (stderr, "error: PCRE error: %d\n", h->pcre_error);
+      fprintf (stderr, "error: PCRE error: %d\n", mexp_get_pcre_error (h));
       exit (EXIT_FAILURE);
     }
   }
