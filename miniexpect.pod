@@ -54,7 +54,7 @@ You can control multiple programs at the same time.
 
 =head1 SPAWNING THE SUBPROCESS
 
-There are two calls for creating a subprocess:
+There are four calls for creating a subprocess:
 
 B<mexp_h *mexp_spawnl (const char *file, const char *arg, ...);>
 
@@ -82,6 +82,31 @@ B<mexp_h *mexp_spawnv (const char *file, char **argv);>
 
 This is the same as C<mexp_spawnl> except that you pass the arguments
 in a NULL-terminated array.
+
+There are also two versions of the above calls which take flags:
+
+B<mexp_h *mexp_spawnlf (unsigned flags, const char *file, const char *arg, ...);>
+
+B<mexp_h *mexp_spawnvf (unsigned flags, const char *file, char **argv);>
+
+The flags may contain the following values, logically ORed together:
+
+=over 4
+
+=item C<MEXP_SPAWN_KEEP_SIGNALS>
+
+Do not reset signal handlers to C<SIG_DFL> in the subprocess.
+
+=item B<MEXP_SPAWN_KEEP_FDS>
+
+Do not close file descriptors E<ge> 3 in the subprocess.
+
+=item B<MEXP_SPAWN_COOKED_MODE> or B<MEXP_SPAWN_RAW_MODE>
+
+Configure the pty in cooked mode or raw mode.  Raw mode is the
+default.
+
+=back
 
 =head1 HANDLES
 
@@ -410,6 +435,17 @@ send a command followed by a newline you have to do something like:
  mexp_printf (h, "exit\n");
 
 =back
+
+B<int mexp_send_interrupt (mexp_h *h);>
+
+Send the interrupt character (C<^C>, Ctrl-C, C<\003>).  This is like
+pressing C<^C> - the subprocess (or remote process, if using C<ssh>)
+is gracefully killed.
+
+Note this only works if the pty is in cooked mode
+(ie. C<MEXP_SPAWN_COOKED_MODE> was passed to C<mexp_spawnlf> or
+C<mexp_spawnvf>).  In raw mode, all characters are passed through
+without any special interpretation.
 
 =head1 SOURCE
 
