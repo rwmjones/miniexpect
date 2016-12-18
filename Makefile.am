@@ -79,6 +79,7 @@ CLEANFILES += miniexpect.3
 
 miniexpect.3: miniexpect.pod
 	$(POD2MAN) \
+	  -u \
 	  --section 3 \
 	  --release "$(PACKAGE)-$(VERSION)" \
 	  -c "Library functions" \
