@@ -12,7 +12,7 @@ miniexpect - A very simple expect library for C.
  #include <miniexpect.h>
  
  mexp_h *h;
- h = mexp_spawnl ("ssh", "ssh", "host");
+ h = mexp_spawnl ("ssh", "ssh", "host", NULL);
  switch (mexp_expect (h, regexps, ovector, ovecsize)) {
    ...
  }
@@ -60,8 +60,9 @@ B<mexp_h *mexp_spawnl (const char *file, const char *arg, ...);>
 
 This creates a subprocess running the external program C<file> (the
 current C<$PATH> is searched unless you give an absolute path).
-C<arg, ...> are the arguments to the program.  Usually the first
-argument should be the name of the program.
+C<arg, ...> are the arguments to the program.  You should terminate
+the list of arguments with C<NULL>.  Usually the first argument should
+be the name of the program.
 
 The return value is a handle (see next section).
 
@@ -70,11 +71,11 @@ the error is available in C<errno>.
 
 For example, to run an ssh subprocess you could do:
 
- h = mexp_spawnl ("ssh", "ssh", "-l", "root", "host");
+ h = mexp_spawnl ("ssh", "ssh", "-l", "root", "host", NULL);
 
 or to run a particular ssh binary:
 
- h = mexp_spawnl ("/usr/local/bin/ssh", "ssh", "-l", "root", "host");
+ h = mexp_spawnl ("/usr/local/bin/ssh", "ssh", "-l", "root", "host", NULL);
 
 An alternative to C<mexp_spawnl> is:
 
