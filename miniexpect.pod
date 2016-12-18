@@ -94,7 +94,7 @@ The flags may contain the following values, logically ORed together:
 
 =over 4
 
-=item C<MEXP_SPAWN_KEEP_SIGNALS>
+=item B<MEXP_SPAWN_KEEP_SIGNALS>
 
 Do not reset signal handlers to C<SIG_DFL> in the subprocess.
 
