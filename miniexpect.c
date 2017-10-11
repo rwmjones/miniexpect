@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <signal.h>
@@ -46,6 +47,10 @@
 #include "miniexpect.h"
 
 #define DEBUG 0
+
+#if DEBUG
+static void debug_buffer (FILE *, const char *);
+#endif
 
 static mexp_h *
 create_handle (void)
@@ -333,7 +338,9 @@ mexp_expect (mexp_h *h, const mexp_regexp *regexps, int *ovector, int ovecsize)
     h->buffer[h->len] = '\0';
 #if DEBUG
     fprintf (stderr, "DEBUG: read %zd bytes from pty\n", rs);
-    fprintf (stderr, "DEBUG: buffer content: %s\n", h->buffer);
+    fprintf (stderr, "DEBUG: buffer content: ");
+    debug_buffer (stderr, h->buffer);
+    fprintf (stderr, "\n");
 #endif
 
   try_match:
@@ -406,7 +413,9 @@ mexp_printf (mexp_h *h, const char *fs, ...)
     return -1;
 
 #if DEBUG
-  fprintf (stderr, "DEBUG: writing: %s\n", msg);
+  fprintf (stderr, "DEBUG: writing: ");
+  debug_buffer (stderr, msg);
+  fprintf (stderr, "\n");
 #endif
 
   n = len;
@@ -430,3 +439,31 @@ mexp_send_interrupt (mexp_h *h)
 {
   return write (h->fd, "\003", 1);
 }
+
+#if DEBUG
+/* Print escaped buffer to fp. */
+static void
+debug_buffer (FILE *fp, const char *buf)
+{
+  while (*buf) {
+    if (isprint (*buf))
+      fputc (*buf, fp);
+    else {
+      switch (*buf) {
+      case '\0': fputs ("\\0", fp); break;
+      case '\a': fputs ("\\a", fp); break;
+      case '\b': fputs ("\\b", fp); break;
+      case '\f': fputs ("\\f", fp); break;
+      case '\n': fputs ("\\n", fp); break;
+      case '\r': fputs ("\\r", fp); break;
+      case '\t': fputs ("\\t", fp); break;
+      case '\v': fputs ("\\v", fp); break;
+      default:
+        fprintf (fp, "\\x%x", (unsigned char) *buf);
+      }
+    }
+    buf++;
+  }
+}
+#endif
+
