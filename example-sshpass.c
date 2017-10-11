@@ -24,8 +24,10 @@
  * The remaining arguments are passed to the ssh subprocess.
  *
  * For example:
- *   sshpass 123456 ssh remote.example.com
- *   sshpass 123456 ssh -l root remote.example.com
+ *   sshpass [-d] 123456 ssh remote.example.com
+ *   sshpass [-d] 123456 ssh -l root remote.example.com
+ *
+ * Use the -d flag to enable debugging to stderr.
  */
 
 #include <config.h>
@@ -42,9 +44,18 @@
 
 static pcre *compile_re (const char *rex);
 
+static void
+usage (void)
+{
+  fprintf (stderr, "usage: sshpass [-d] PASSWORD ssh [SSH-ARGS...] HOST\n");
+  exit (EXIT_FAILURE);
+}
+
 int
 main (int argc, char *argv[])
 {
+  int opt;
+  int debug = 0;
   mexp_h *h;
   const char *password;
   int status;
@@ -52,20 +63,31 @@ main (int argc, char *argv[])
   const int ovecsize = 12;
   int ovector[ovecsize];
 
-  if (argc <= 3) {
-    fprintf (stderr, "usage: sshpass PASSWORD ssh [SSH-ARGS...] HOST\n");
-    exit (EXIT_FAILURE);
+  while ((opt = getopt (argc, argv, "d")) != -1) {
+    switch (opt) {
+    case 'd':
+      debug = 1;
+      break;
+    default:
+      usage ();
+    }
   }
 
-  password = argv[1];
+  if (argc-optind <= 2)
+    usage ();
+
+  password = argv[optind];
+  optind++;
 
   printf ("starting ssh command ...\n");
 
-  h = mexp_spawnv (argv[2], &argv[2]);
+  h = mexp_spawnv (argv[optind], &argv[optind]);
   if (h == NULL) {
     perror ("mexp_spawnv: ssh");
     exit (EXIT_FAILURE);
   }
+  if (debug)
+    mexp_set_debug_file (h, stderr);
 
   /* Wait for the password prompt. */
   password_re = compile_re ("assword");
@@ -91,10 +113,16 @@ main (int argc, char *argv[])
     goto error;
   }
 
-  /* Got the password prompt, so send a password. */
+  /* Got the password prompt, so send a password.
+   *
+   * Note use of mexp_printf_password here which is identical to
+   * mexp_printf except that it hides the password in debugging
+   * output.
+   */
   printf ("sending the password ...\n");
 
-  if (mexp_printf (h, "%s\n", password) == -1) {
+  if (mexp_printf_password (h, "%s", password) == -1 ||
+      mexp_printf (h, "\n") == -1) {
     perror ("mexp_printf");
     goto error;
   }
