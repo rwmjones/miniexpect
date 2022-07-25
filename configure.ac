@@ -1,5 +1,5 @@
 # miniexpect
-# Copyright (C) 2014 Red Hat Inc.
+# Copyright (C) 2014-2022 Red Hat Inc.
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -15,7 +15,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 
-AC_INIT([miniexpect],[1.0])
+AC_INIT([miniexpect],[1.1])
 
 AM_INIT_AUTOMAKE(foreign) dnl NB: Do not [quote] this parameter.
 
@@ -42,8 +42,8 @@ AM_PROG_CC_C_O
 dnl Check support for 64 bit file offsets.
 AC_SYS_LARGEFILE
 
-dnl The only dependency is libpcre (Perl Compatible Regular Expressions).
-PKG_CHECK_MODULES([PCRE], [libpcre])
+dnl The only dependency is libpcre2 (Perl Compatible Regular Expressions).
+PKG_CHECK_MODULES([PCRE2], [libpcre2-8])
 
 dnl Optional for building the manual page.  This is part of Perl.
 AC_CHECK_PROG([POD2MAN], [pod2man], [pod2man], [no])

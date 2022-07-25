@@ -1,5 +1,5 @@
 /* miniexpect example.
- * Copyright (C) 2014 Red Hat Inc.
+ * Copyright (C) 2014-2022 Red Hat Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -38,11 +38,12 @@
 #include <unistd.h>
 #include <assert.h>
 
-#include <pcre.h>
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
 
 #include "miniexpect.h"
 
-static pcre *compile_re (const char *rex);
+static pcre2_code *compile_re (const char *rex);
 
 static void
 usage (void)
@@ -59,9 +60,10 @@ main (int argc, char *argv[])
   mexp_h *h;
   const char *password;
   int status;
-  pcre *password_re, *prompt_re, *hello_re;
-  const int ovecsize = 12;
-  int ovector[ovecsize];
+  pcre2_code *password_re, *prompt_re, *hello_re;
+  pcre2_match_data *match_data;
+
+  match_data = pcre2_match_data_create (4, NULL);
 
   while ((opt = getopt (argc, argv, "d")) != -1) {
     switch (opt) {
@@ -96,7 +98,7 @@ main (int argc, char *argv[])
                          { 100, .re = password_re },
                          { 0 }
                        },
-                       ovector, ovecsize)) {
+                       match_data)) {
   case 100:
     break;
   case MEXP_EOF:
@@ -140,7 +142,7 @@ main (int argc, char *argv[])
                          { 101, .re = prompt_re },
                          { 0 },
                        },
-                       ovector, ovecsize)) {
+                       match_data)) {
   case 100:                     /* Password. */
     fprintf (stderr, "error: ssh asked for password again, probably the password supplied is wrong\n");
     goto error;
@@ -175,7 +177,7 @@ main (int argc, char *argv[])
                          { 100, .re = hello_re },
                          { 0 },
                        },
-                       ovector, ovecsize)) {
+                       match_data)) {
   case 100:
     break;
   case MEXP_EOF:
@@ -200,7 +202,7 @@ main (int argc, char *argv[])
     goto error;
   }
 
-  switch (mexp_expect (h, NULL, NULL, 0)) {
+  switch (mexp_expect (h, NULL, NULL)) {
   case MEXP_EOF:
     /* This is what we're expecting: ssh will close the connection. */
     break;
@@ -225,6 +227,7 @@ main (int argc, char *argv[])
 
   printf ("test was successful\n");
 
+  pcre2_match_data_free (match_data);
   exit (EXIT_SUCCESS);
 
  error:
@@ -233,17 +236,23 @@ main (int argc, char *argv[])
 }
 
 /* Helper function to compile a PCRE regexp. */
-static pcre *
+static pcre2_code *
 compile_re (const char *rex)
 {
-  const char *errptr;
-  int erroffset;
-  pcre *ret;
+  int errorcode;
+  PCRE2_SIZE erroroffset;
+  char errormsg[256];
+  pcre2_code *ret;
 
-  ret = pcre_compile (rex, 0, &errptr, &erroffset, NULL);
+  ret = pcre2_compile ((PCRE2_SPTR) rex, PCRE2_ZERO_TERMINATED,
+                       0, &errorcode, &erroroffset, NULL);
   if (ret == NULL) {
-    fprintf (stderr, "error: failed to compile regular expression '%s': %s at offset %d\n",
-             rex, errptr, erroffset);
+    pcre2_get_error_message (errorcode,
+                             (PCRE2_UCHAR *) errormsg, sizeof errormsg);
+    fprintf (stderr, "error: "
+             "failed to compile regular expression '%s': "
+             "%s at offset %zu\n",
+             rex, errormsg, erroroffset);
     exit (EXIT_FAILURE);
   }
   return ret;

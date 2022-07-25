@@ -34,13 +34,12 @@ main (int argc, char *argv[])
   int r;
   int rv[5];
   size_t i;
-  pcre *multi_re = test_compile_re ("multi");
-  pcre *match_re = test_compile_re ("match");
-  pcre *ing_re = test_compile_re ("ing");
-  pcre *str_re = test_compile_re ("str");
-  pcre *s_re = test_compile_re ("s");
-  const int ovecsize = 12;
-  int ovector[ovecsize];
+  pcre2_code *multi_re = test_compile_re ("multi");
+  pcre2_code *match_re = test_compile_re ("match");
+  pcre2_code *ing_re = test_compile_re ("ing");
+  pcre2_code *str_re = test_compile_re ("str");
+  pcre2_code *s_re = test_compile_re ("s");
+  pcre2_match_data *match_data = pcre2_match_data_create (4, NULL);
 
   /* If the subprocess prints multiple things, we should be able to
    * repeatedly call mexp_expect to match on each one.  This didn't
@@ -58,7 +57,7 @@ main (int argc, char *argv[])
                        { 103, str_re },
                        { 104, s_re },
                        { 0 },
-                     }, ovector, ovecsize);
+                     }, match_data);
     switch (r) {
     case 100: case 101: case 102: case 103: case 104:
       printf ("iteration %zu: matched %d\n", i, r);

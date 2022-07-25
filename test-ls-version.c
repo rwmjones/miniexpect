@@ -28,7 +28,8 @@
 #include <unistd.h>
 #include <assert.h>
 
-#include <pcre.h>
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
 
 #include "miniexpect.h"
 #include "tests.h"
@@ -38,11 +39,11 @@ main (int argc, char *argv[])
 {
   mexp_h *h;
   int status, r;
-  pcre *ls_coreutils_re;
-  pcre *ls_busybox_re;
-  const int ovecsize = 12;
-  int ovector[ovecsize];
-  const char *version;
+  pcre2_code *ls_coreutils_re;
+  pcre2_code *ls_busybox_re;
+  pcre2_match_data *match_data = pcre2_match_data_create (4, NULL);
+  PCRE2_UCHAR *version;
+  PCRE2_SIZE verlen;
 
   ls_coreutils_re = test_compile_re ("^ls.* ([.\\d]+)");
   /* Busybox doesn't actually recognize the --version option, but
@@ -58,19 +59,18 @@ main (int argc, char *argv[])
                          { 100, ls_coreutils_re },
                          { 101, ls_busybox_re },
                          { 0 },
-                       }, ovector, ovecsize)) {
+                       }, match_data)) {
   case 100:
   case 101:
     /* Get the matched version number. */
-    r = pcre_get_substring (h->buffer, ovector,
-                            mexp_get_pcre_error (h), 1, &version);
+    r = pcre2_substring_get_bynumber (match_data, 1, &version, &verlen);
     if (r < 0) {
       fprintf (stderr, "error: PCRE error reading version substring: %d\n",
                r);
       exit (EXIT_FAILURE);
     }
-    printf ("ls version = %s\n", version);
-    pcre_free_substring (version);
+    printf ("ls version = %s\n", (char *) version);
+    pcre2_substring_free (version);
     break;
   case MEXP_EOF:
     fprintf (stderr, "error: EOF before matching version string\n");
@@ -94,8 +94,9 @@ main (int argc, char *argv[])
     exit (EXIT_FAILURE);
   }
 
-  pcre_free (ls_coreutils_re);
-  pcre_free (ls_busybox_re);
+  pcre2_code_free (ls_coreutils_re);
+  pcre2_code_free (ls_busybox_re);
+  pcre2_match_data_free (match_data);
 
   exit (EXIT_SUCCESS);
 }

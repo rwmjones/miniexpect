@@ -35,14 +35,8 @@
 #include <sys/wait.h>
 #include <sys/time.h>
 
-#include <pcre.h>
-
-/* RHEL 6 pcre did not define PCRE_PARTIAL_SOFT.  However PCRE_PARTIAL
- * is a synonym so use that.
- */
-#ifndef PCRE_PARTIAL_SOFT
-#define PCRE_PARTIAL_SOFT PCRE_PARTIAL
-#endif
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
 
 #include "miniexpect.h"
 
@@ -251,7 +245,8 @@ mexp_spawnvf (unsigned flags, const char *file, char **argv)
 }
 
 enum mexp_status
-mexp_expect (mexp_h *h, const mexp_regexp *regexps, int *ovector, int ovecsize)
+mexp_expect (mexp_h *h, const mexp_regexp *regexps,
+             pcre2_match_data *match_data)
 {
   time_t start_t, now_t;
   int timeout;
@@ -347,17 +342,21 @@ mexp_expect (mexp_h *h, const mexp_regexp *regexps, int *ovector, int ovecsize)
       assert (h->buffer != NULL);
 
       for (i = 0; regexps[i].r > 0; ++i) {
-        const int options = regexps[i].options | PCRE_PARTIAL_SOFT;
+        const int options = regexps[i].options | PCRE2_PARTIAL_SOFT;
 
-        r = pcre_exec (regexps[i].re, regexps[i].extra,
-                       h->buffer, (int)h->len, 0,
-                       options,
-                       ovector, ovecsize);
+        r = pcre2_match (regexps[i].re,
+                         (PCRE2_SPTR) h->buffer, (int)h->len, 0,
+                         options, match_data, NULL);
         h->pcre_error = r;
 
         if (r >= 0) {
           /* A full match. */
-          if (ovector != NULL && ovecsize >= 1 && ovector[1] >= 0)
+          const PCRE2_SIZE *ovector = NULL;
+
+          if (match_data)
+            ovector = pcre2_get_ovector_pointer (match_data);
+
+          if (ovector != NULL && ovector[1] >= 0)
             h->next_match = ovector[1];
           else
             h->next_match = -1;
@@ -367,12 +366,12 @@ mexp_expect (mexp_h *h, const mexp_regexp *regexps, int *ovector, int ovecsize)
           return regexps[i].r;
         }
 
-        else if (r == PCRE_ERROR_NOMATCH) {
+        else if (r == PCRE2_ERROR_NOMATCH) {
           /* No match at all. */
           /* (nothing here) */
         }
 
-        else if (r == PCRE_ERROR_PARTIAL) {
+        else if (r == PCRE2_ERROR_PARTIAL) {
           /* Partial match.  Keep the buffer and keep reading. */
           can_clear_buffer = 0;
         }

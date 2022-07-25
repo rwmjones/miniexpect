@@ -1,5 +1,5 @@
 /* miniexpect test suite
- * Copyright (C) 2014 Red Hat Inc.
+ * Copyright (C) 2014-2022 Red Hat Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -39,17 +39,24 @@ test_diagnose (int status)
     fprintf (stderr, "stopped by signal %d", WSTOPSIG (status));
 }
 
-static pcre *
+__attribute__((__unused__))
+static pcre2_code *
 test_compile_re (const char *rex)
 {
-  const char *errptr;
-  int erroffset;
-  pcre *ret;
+  int errorcode;
+  PCRE2_SIZE erroroffset;
+  char errormsg[256];
+  pcre2_code *ret;
 
-  ret = pcre_compile (rex, 0, &errptr, &erroffset, NULL);
+  ret = pcre2_compile ((PCRE2_SPTR) rex, PCRE2_ZERO_TERMINATED,
+                       0, &errorcode, &erroroffset, NULL);
   if (ret == NULL) {
-    fprintf (stderr, "error: failed to compile regular expression '%s': %s at offset %d\n",
-             rex, errptr, erroffset);
+    pcre2_get_error_message (errorcode,
+                             (PCRE2_UCHAR *) errormsg, sizeof errormsg);
+    fprintf (stderr, "error: "
+             "failed to compile regular expression '%s': "
+             "%s at offset %zu\n",
+             rex, errormsg, erroroffset);
     exit (EXIT_FAILURE);
   }
   return ret;

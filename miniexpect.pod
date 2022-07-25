@@ -8,17 +8,18 @@ miniexpect - A very simple expect library for C.
 
  #include <errno.h>
  #include <sys/wait.h>
- #include <pcre.h>
+ #define PCRE2_CODE_UNIT_WIDTH 8
+ #include <pcre2.h>
  #include <miniexpect.h>
  
  mexp_h *h;
  h = mexp_spawnl ("ssh", "ssh", "host", NULL);
- switch (mexp_expect (h, regexps, ovector, ovecsize)) {
+ switch (mexp_expect (h, regexps, match_data)) {
    ...
  }
  mexp_close (h);
 
- cc prog.c -o prog -lminiexpect -lpcre
+ cc prog.c -o prog -lminiexpect -lpcre2-8
 
 =head1 DESCRIPTION
 
@@ -30,10 +31,10 @@ Tcl.  It is also thread safe, const-correct and uses modern C
 standards.
 
 Miniexpect is a standalone library, except for a single dependency: it
-requires the PCRE (Perl Compatible Regular Expressions) library from
-L<http://www.pcre.org/>.  The PCRE dependency is fundamental because
+requires the PCRE2 (Perl Compatible Regular Expressions) library from
+L<http://www.pcre.org/>.  The PCRE2 dependency is fundamental because
 we want to offer the most powerful regular expression syntax to match
-on, but more importantly because PCRE has a convenient way to detect
+on, but more importantly because PCRE2 has a convenient way to detect
 partial matches which made this library very simple to implement.
 
 This manual page documents the API.  Examples of how to use the API
@@ -152,30 +153,12 @@ The default is 1024.  Most callers will not need to change this.
 B<int mexp_get_pcre_error (mexp *h);>
 
 When C<mexp_expect> [see below] calls the PCRE function
-L<pcre_exec(3)>, it stashes the return value in the C<pcre_error>
+L<pcre2_match(3)>, it stashes the return value in the C<pcre_error>
 field in the handle, and that field is returned by this method.
 
-There are two uses for this:
-
-=over 4
-
-=item 1.
-
 If C<mexp_expect> returns C<MEXP_PCRE_ERROR>, then the actual PCRE
-error code returned by L<pcre_exec(3)> is available by calling this
-method.  For a list of PCRE error codes, see L<pcreapi(3)>.
-
-=item 2.
-
-A more unusual use is if you ever need to get the captured substrings
-from your regular expression (calling L<pcre_get_substring(3)>).  The
-third parameter of that function (C<stringcount>) is the value
-returned by L<pcre_exec(3)>, and so you can call it like this:
-
- pcre_get_substring (h->buffer, ovector,
-                     mexp_get_pcre_error (h), 1, &matched);
-
-=back
+error code returned by L<pcre2_match(3)> is available by calling this
+method.  For a list of PCRE error codes, see L<pcre2api(3)>.
 
 B<void mexp_set_debug_file (mexp *h, FILE *fp);>
 
@@ -278,10 +261,10 @@ This is how code should check for and print errors from C<mexp_close>:
 =head1 EXPECT FUNCTION
 
 Miniexpect contains a powerful regular expression matching function
-based on L<pcre(3)>:
+based on L<pcre2(3)>:
 
 B<int mexp_expect (mexp_h *h, const mexp_regexp *regexps,
-int *ovector, int ovecsize);>
+pcre2_match_data *match_data);>
 
 The output of the subprocess is matched against the list of PCRE
 regular expressions in C<regexps>.  C<regexps> is a list of regular
@@ -289,8 +272,7 @@ expression structures:
 
  struct mexp_regexp {
    int r;
-   const pcre *re;
-   const pcre_extra *extra;
+   const pcre2_code *re;
    int options;
  };
  typedef struct mexp_regexp mexp_regexp;
@@ -343,8 +325,8 @@ for EOF or timeout.
 
 =item *
 
-C<regexps[].re>, C<regexps[].extra>, C<regexps[].options>, C<ovector>
-and C<ovecsize> are passed through to the L<pcre_exec(3)> function.
+C<regexps[].re>, C<regexps[].options> and C<match_data> are passed
+through to the L<pcre2_match(3)> function.
 
 =item *
 
@@ -387,9 +369,8 @@ compiler, you can just use a local variable instead.
  mexp_h *h;
  char *errptr;
  int offset;
- pcre *password_re, *prompt_re;
- const int ovecsize = 12;
- int ovector[ovecsize];
+ pcre2_code *password_re, *prompt_re;
+ pcre2_match_data *match_data = pcre2_match_data_create (4, NULL);
  
  password_re = pcre_compile ("assword", 0, &errptr, &offset, NULL);
  prompt_re = pcre_compile ("[$#] ", 0, &errptr, &offset, NULL);
@@ -399,7 +380,7 @@ compiler, you can just use a local variable instead.
                         { 100, .re = password_re },
                         { 101, .re = prompt_re },
                         { 0 },
-                      }, ovector, ovecsize)) {
+                      }, match_data)) {
   case 100:
     /* here you would send a password */
     break;
@@ -476,9 +457,9 @@ L<http://git.annexia.org/?p=miniexpect.git;a=summary>
 
 =head1 SEE ALSO
 
-L<pcre(3)>,
-L<pcre_exec(3)>,
-L<pcreapi(3)>,
+L<pcre2(3)>,
+L<pcre2_match(3)>,
+L<pcre2api(3)>,
 L<waitpid(2)>,
 L<system(3)>.
 
@@ -493,4 +474,4 @@ your option any later version.
 
 =head1 COPYRIGHT
 
-Copyright (C) 2014 Red Hat Inc.
+Copyright (C) 2014-2022 Red Hat Inc.

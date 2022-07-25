@@ -1,5 +1,5 @@
 /* miniexpect
- * Copyright (C) 2014 Red Hat Inc.
+ * Copyright (C) 2014-2022 Red Hat Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,7 +32,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include <pcre.h>
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
 
 /* This handle is created per subprocess that is spawned. */
 struct mexp_h {
@@ -84,8 +85,7 @@ extern int mexp_close (mexp_h *h);
 /* Expect. */
 struct mexp_regexp {
   int r;
-  const pcre *re;
-  const pcre_extra *extra;
+  const pcre2_code *re;
   int options;
 };
 typedef struct mexp_regexp mexp_regexp;
@@ -98,7 +98,7 @@ enum mexp_status {
 };
 
 extern int mexp_expect (mexp_h *h, const mexp_regexp *regexps,
-                        int *ovector, int ovecsize);
+                        pcre2_match_data *match_data);
 
 /* Sending commands, keypresses. */
 extern int mexp_printf (mexp_h *h, const char *fs, ...)
