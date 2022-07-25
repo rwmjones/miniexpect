@@ -361,6 +361,9 @@ mexp_expect (mexp_h *h, const mexp_regexp *regexps, int *ovector, int ovecsize)
             h->next_match = ovector[1];
           else
             h->next_match = -1;
+          if (h->debug_fp)
+            fprintf (h->debug_fp, "DEBUG: next_match at buffer offset %zu\n",
+                     h->next_match);
           return regexps[i].r;
         }
 
