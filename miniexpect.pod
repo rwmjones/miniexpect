@@ -302,7 +302,7 @@ returned in C<errno>.
 
 =item C<MEXP_PCRE_ERROR>
 
-There was a C<pcre_exec> error.  C<h-E<gt>pcre_error> is set to the
+There was a C<pcre2_match> error.  C<h-E<gt>pcre_error> is set to the
 error code.  See L<pcreapi(3)> for a list of the C<PCRE_*> error codes
 and what they mean.
 
@@ -367,13 +367,15 @@ literal" and is available in C99.  If you need to use an older
 compiler, you can just use a local variable instead.
 
  mexp_h *h;
- char *errptr;
+ int errcode;
  int offset;
  pcre2_code *password_re, *prompt_re;
  pcre2_match_data *match_data = pcre2_match_data_create (4, NULL);
  
- password_re = pcre_compile ("assword", 0, &errptr, &offset, NULL);
- prompt_re = pcre_compile ("[$#] ", 0, &errptr, &offset, NULL);
+ password_re = pcre2_compile ("assword", PCRE2_ZERO_TERMINATED,
+                              0, &errcode, &offset, NULL);
+ prompt_re = pcre2_compile ("[$#] ", PCRE2_ZERO_TERMINATED,
+                            0, &errcode, &offset, NULL);
  
  switch (mexp_expect (h,
                       (mexp_regexp[]) {
