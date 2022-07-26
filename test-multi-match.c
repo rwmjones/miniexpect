@@ -92,5 +92,12 @@ main (int argc, char *argv[])
     exit (EXIT_FAILURE);
   }
 
+  pcre2_code_free (multi_re);
+  pcre2_code_free (match_re);
+  pcre2_code_free (ing_re);
+  pcre2_code_free (str_re);
+  pcre2_code_free (s_re);
+  pcre2_match_data_free (match_data);
+
   exit (EXIT_SUCCESS);
 }
