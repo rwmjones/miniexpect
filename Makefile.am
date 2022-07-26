@@ -58,7 +58,7 @@ test_multi_match_LDADD = libminiexpect.la
 
 # parallel-tests breaks the ability to put 'valgrind' into
 # TESTS_ENVIRONMENT.  Hence we have to work around it:
-check-valgrind:
+check-valgrind: $(TESTS)
 	for t in $(TESTS); do \
 	  $(LIBTOOL) --mode=execute $(VG) ./$$t; \
 	  r=$$?; \
