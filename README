@@ -1,4 +1,4 @@
-miniexpect is a very simple expect-like library for C.
+miniexpect is a very simple expect-like library
 
 It has a saner interface than libexpect, and doesn't depend on Tcl.
 It is also thread safe, const-correct and uses modern C standards.

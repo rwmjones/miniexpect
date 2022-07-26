@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-miniexpect - A very simple expect library for C.
+miniexpect - A very simple expect library
 
 =head1 SYNOPSIS
 
@@ -384,10 +384,12 @@ compiler, you can just use a local variable instead.
                         { 0 },
                       }, match_data)) {
   case 100:
-    /* here you would send a password */
+    /* server printed a password prompt, so send a password */
+    mexp_printf_password (h, "%s", password);
     break;
   case 101:
-    /* here you would send a command */
+    /* server sent a shell prompt, send a command */
+    mexp_printf (h, "ls\n");
     break;
   case MEXP_EOF:
     fprintf (stderr, "error: ssh closed the connection unexpectedly\n");
