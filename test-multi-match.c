@@ -51,11 +51,11 @@ main (int argc, char *argv[])
   for (i = 0; i < 5; ++i) {
     r = mexp_expect (h,
                      (mexp_regexp[]) {
-                       { 100, multi_re },
-                       { 101, match_re },
-                       { 102, ing_re },
-                       { 103, str_re },
-                       { 104, s_re },
+                       { 100, multi_re, 0 },
+                       { 101, match_re, 0 },
+                       { 102, ing_re, 0 },
+                       { 103, str_re, 0 },
+                       { 104, s_re, 0 },
                        { 0 },
                      }, match_data);
     switch (r) {
