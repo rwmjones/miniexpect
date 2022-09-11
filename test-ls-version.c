@@ -56,8 +56,8 @@ main (int argc, char *argv[])
 
   switch (mexp_expect (h,
                        (mexp_regexp[]) {
-                         { 100, ls_coreutils_re },
-                         { 101, ls_busybox_re },
+                         { 100, ls_coreutils_re, 0 },
+                         { 101, ls_busybox_re, 0 },
                          { 0 },
                        }, match_data)) {
   case 100:
