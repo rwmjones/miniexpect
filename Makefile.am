@@ -24,7 +24,7 @@ EXTRA_DIST = miniexpect.3
 lib_LTLIBRARIES = libminiexpect.la
 
 libminiexpect_la_SOURCES = miniexpect.c miniexpect.h
-libminiexpect_la_CFLAGS = $(PCRE2_CFLAGS) -Wall
+libminiexpect_la_CFLAGS = $(PCRE2_CFLAGS) -Wall -Wextra -Wshadow
 libminiexpect_la_LIBADD = $(PCRE2_LIBS)
 libminiexpect_la_LDFLAGS = -version-info 0:0:0
 
@@ -33,7 +33,7 @@ libminiexpect_la_LDFLAGS = -version-info 0:0:0
 noinst_PROGRAMS = example-sshpass
 
 example_sshpass_SOURCES = example-sshpass.c
-example_sshpass_CFLAGS = $(PCRE2_CFLAGS) -Wall
+example_sshpass_CFLAGS = $(PCRE2_CFLAGS) -Wall -Wextra -Wshadow
 example_sshpass_LDADD = libminiexpect.la
 
 # Tests.
@@ -45,15 +45,15 @@ check_PROGRAMS = \
 	test-multi-match
 
 test_spawn_SOURCES = test-spawn.c tests.h miniexpect.h
-test_spawn_CFLAGS = $(PCRE2_CFLAGS) -Wall
+test_spawn_CFLAGS = $(PCRE2_CFLAGS) -Wall -Wextra -Wshadow
 test_spawn_LDADD = libminiexpect.la
 
 test_ls_version_SOURCES = test-ls-version.c tests.h miniexpect.h
-test_ls_version_CFLAGS = $(PCRE2_CFLAGS) -Wall
+test_ls_version_CFLAGS = $(PCRE2_CFLAGS) -Wall -Wextra -Wshadow
 test_ls_version_LDADD = libminiexpect.la
 
 test_multi_match_SOURCES = test-multi-match.c tests.h miniexpect.h
-test_multi_match_CFLAGS = $(PCRE2_CFLAGS) -Wall
+test_multi_match_CFLAGS = $(PCRE2_CFLAGS) -Wall -Wextra -Wshadow
 test_multi_match_LDADD = libminiexpect.la
 
 # parallel-tests breaks the ability to put 'valgrind' into
