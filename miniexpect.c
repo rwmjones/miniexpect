@@ -356,7 +356,7 @@ mexp_expect (mexp_h *h, const mexp_regexp *regexps,
           if (match_data)
             ovector = pcre2_get_ovector_pointer (match_data);
 
-          if (ovector != NULL && ovector[1] >= 0)
+          if (ovector != NULL && ovector[1] != ~(PCRE2_SIZE)0)
             h->next_match = ovector[1];
           else
             h->next_match = -1;
