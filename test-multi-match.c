@@ -27,7 +27,7 @@
 #include "tests.h"
 
 int
-main (int argc, char *argv[])
+main (int argc __attribute__ ((unused)), char *argv[])
 {
   mexp_h *h;
   int status;
